@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
-class ErroPage extends StatelessWidget {
-  const ErroPage( {Key? key}) : super(key: key);
+class Menssagem extends StatelessWidget {
+  String text;
+
+  Menssagem({required this.text, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Text(
-        "Erro ao Carregar Dados",
-        style: TextStyle(
+        text,
+        style:const TextStyle(
           color: Colors.amber,
           fontSize: 25,
         ),
@@ -17,3 +19,4 @@ class ErroPage extends StatelessWidget {
     );
   }
 }
+
