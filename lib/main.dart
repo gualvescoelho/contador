@@ -10,7 +10,7 @@ void main() async{
 }
 
 class MyApp extends StatelessWidget {
-   MyApp( {Key? key}) : super(key: key);
+   MyApp( {super.key});
 
   @override
   Widget build(BuildContext context) {
