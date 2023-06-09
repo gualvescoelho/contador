@@ -7,6 +7,7 @@ import 'dart:convert';
 
 void main() async{
   runApp(MyApp());
+  print("oi");
 }
 
 class MyApp extends StatelessWidget {
