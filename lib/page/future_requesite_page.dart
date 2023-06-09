@@ -1,12 +1,10 @@
 import 'dart:convert';
-import 'package:flutter_application_1/Widget/aguardando_widget.dart';
-import 'package:flutter_application_1/Widget/erro_widget.dart';
-import 'package:flutter_application_1/page/principal_page.dart';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:async/async.dart';
+import '../Widget/menssagem.dart';
 import '../models/moedas.dart';
-import 'future_page2.dart';
 
 //Inicio das constantes da URL
 const request = "https://api.hgbrasil.com/finance?key=33bdfb08";
@@ -21,8 +19,6 @@ Future<Map> getData() async {
   return json.decode(response.body);
 }
 
-
-
 class ConversoMoeda extends StatefulWidget {
    ConversoMoeda({super.key});
 
@@ -35,8 +31,7 @@ class _ConversoMoedaState extends State<ConversoMoeda> {
 
   @override
   Widget build(BuildContext context) {
-    print('Build reset: ${moedas.reset}');
-    print('Build resete_erro: ${moedas.reset}');
+    log("Build future_requesite/ConvesorMoeda");
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -50,15 +45,133 @@ class _ConversoMoedaState extends State<ConversoMoeda> {
             moedas.reset = !moedas.reset;
           });
           },
-          icon: moedas.resete_erro ? Icon(Icons.system_update, color: Colors.black,) : moedas.reset ? Icon(Icons.refresh_outlined, color:Colors.black) : Icon(Icons.system_update, color: Colors.black,),
-          )
+          icon:IconFunc(moedas))
         ],
       ),
-      body:moedas.resete_erro?Future2(moedas: moedas): moedas.reset ? PrincipalPage(moedas) : Future2(moedas: moedas),
+      body:moedas.resete_erro? Future2(moedas): moedas.reset ? PrincipalPage(moedas) : Future2(moedas),
     );
   }
 
   
+}
+Widget IconFunc(Moedas moedas){
+  return  moedas.resete_erro ? const Icon(Icons.system_update, color: Colors.black,) :
+  moedas.reset ? const Icon(Icons.system_update, color: Colors.black,) : const Icon(Icons.refresh_outlined, color:Colors.black);
+
+}
+Widget PrincipalPage(Moedas moedas){
+  final realController = TextEditingController();
+  final dolarController = TextEditingController();
+  final euroController = TextEditingController();
+  //valor de 1 dolar em reais
+  // valor de 1 euro em reais
+
+
+  void _realChanged(String text){
+    if(realController.text.isNotEmpty){
+      double realText = double.parse(text);
+      dolarController.text=(realText/moedas.dolar).toStringAsFixed(2);
+      euroController.text =(realText/moedas.euro).toStringAsFixed(2);
+    }else{
+      dolarController.text = "";
+      euroController.text = '';
+    }
+  }
+  void _dolarChanged(String text){
+    if(dolarController.text.isNotEmpty) {
+      double dolarText = double.parse(text);
+      euroController.text = (moedas.dolar* dolarText/moedas.euro).toStringAsFixed(2);
+      realController.text = (moedas.dolar* dolarText).toStringAsFixed(2);
+    }else{
+      realController.text = "";
+      euroController.text = '';
+    }
+  }
+  void _euroChanged(String text){
+    if(text.isNotEmpty){
+      double euroText = double.parse(text);
+      dolarController.text=(moedas.euro* euroText/moedas.dolar).toStringAsFixed(2);
+      realController.text = (moedas.euro* euroText).toStringAsFixed(2);
+    }else{
+      realController.text = "";
+      dolarController.text = '';
+    }
+  }
+
+  void resetAll() {
+    print('oi');
+
+    realController.text = "";
+    euroController.text = "";
+    dolarController.text = "";
+
+  }
+
+    resetAll();
+
+    return  SingleChildScrollView(
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+
+          const Icon(Icons.monetization_on, size: 130,color: Colors.amber),
+          buildTextField(true,"Reais", "R\$ ",realController,_realChanged),
+
+          const Divider(),
+          buildTextField(false,"Dólares", "US\$ ", dolarController, _dolarChanged),
+
+          const  Divider(),
+          buildTextField(false,"Euro", "EU\$ ",euroController, _euroChanged),
+
+        ],
+      ),
+    );
+  }
+
+buildTextField(bool autofocus,String lable, String prefix,TextEditingController controller,func){
+
+  return TextField(
+    autofocus: autofocus,
+    controller: controller,
+    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    style: const TextStyle(color: Colors.amber, fontSize: 25),
+    decoration: InputDecoration(
+      labelText: lable,
+      labelStyle:TextStyle(color: Colors.amber,fontSize: 25),
+      border: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.amber)) ,
+      prefixText: prefix,
+      hintStyle: TextStyle(color: Colors.amber, fontSize: 20,),
+
+    ),
+    onChanged: func,
+  );
+}
+
+Widget Future2(Moedas moedas){
+  return FutureBuilder<Map>(
+      future: getData(),
+      builder: (context, snapshot) {
+
+        if (
+        snapshot.connectionState  == ConnectionState.none
+            || snapshot.connectionState == ConnectionState.waiting) {
+
+          return Menssagem(text: "Carregando Dados");
+
+        } else if (snapshot.hasError) {
+
+
+          return Menssagem(text: "Erro ao Carregar Dados");
+        } else {
+
+          moedas.dolar = snapshot.data!["results"]["currencies"]["USD"]["buy"];
+          moedas.euro = snapshot.data!["results"]["currencies"]["EUR"]["buy"];
+          return PrincipalPage(moedas);
+        }
+      });
 }
 
 
